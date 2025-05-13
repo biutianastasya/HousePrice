@@ -1,0 +1,14 @@
+{% extends 'layout.html' %}
+{% block content %}
+<h2>Hasil Prediksi</h2>
+<p><strong>Prediksi Harga:</strong> {{ price }}</p>
+<p><strong>Jarak ke Fasum Terdekat:</strong> {{ distance }} km</p>
+<p><strong>Faktor Utama:</strong> {{ explanation }}</p>
+<div id="map" style="height: 500px;" class="mt-4"></div>
+<script>
+  var map = L.map('map').setView([{{ lat }}, {{ lon }}], 14);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+  L.marker([{{ lat }}, {{ lon }}]).addTo(map)
+    .bindPopup(`Harga: {{ price }}<br>Jarak: {{ distance }} km<br>Faktor: {{ explanation }}`).openPopup();
+</script>
+{% endblock %}
