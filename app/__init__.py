@@ -8,10 +8,8 @@ def create_app():
         template_folder=os.path.join(base_dir, 'templates'),
         static_folder=os.path.join(base_dir, 'static')
     )
-    app.config['MODEL_PATH']    = 'app/best_property_model.pkl'
-    app.config['FEATURES_PATH'] = 'app/feature_list.pkl'
-    # app.config['MODEL_PATH']    = 'app/final_xgboost_model.pkl'
-    # app.config['FEATURES_PATH'] = 'app/final_xgboost_features.pkl'
+    app.config['MODEL_PATH']    = 'app/property_price_model.pkl'
+    app.config['FEATURES_PATH'] = 'app/property_price_features.pkl'
     app.config['POI_PATTERN']   = 'app/poi_*.csv'
 
     from app.controllers import main

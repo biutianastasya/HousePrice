@@ -56,10 +56,13 @@ def index():
         dist = min(all_distances) if all_distances else np.nan
 
         input_vals = {
+            'tahun_dibangun': int(request.form['tahun_dibangun']), 
+            'tahun_direnovasi': int(request.form.get('tahun_direnovasi', 0) or 0),
             'luas_tanah': tanah,
             'luas_bangunan': bangunan,
-            'tahun_dibangun': int(request.form['tahun_dibangun']),
-            'tahun_direnovasi': int(request.form.get('tahun_direnovasi', 0) or 0),
+            'listrik': request.form['listrik'],
+            'pam': 1 if request.form['air'] == 'PAM' else 0,
+            'sumur_pompa': 0 if request.form['air'] == 'pam' else 1,
             'lebar_jalan_(perkerasan)': int(request.form['lebar_jalan']),
             'jarak_ke_stasiun_terdekat': jarak_stasiun,
             'jarak_ke_sekolah_terdekat': jarak_sekolah,
@@ -67,16 +70,26 @@ def index():
             'jarak_ke_market_terdekat': jarak_market,
             'jarak_ke_kampus_terdekat': jarak_kampus,
             'jarak_ke_halte_terdekat': jarak_halte,
-            'status_tanah': request.form.get('status_tanah') or 'SHM',
+            'jarak_dari_jakarta': 10,
+            'building_age': int(datetime.datetime.now().year - int(request.form['tahun_dibangun'])),
+            'is_renovated': 1 if request.form.get('tahun_direnovasi') else 0,
+            'years_since_renovation': int(datetime.datetime.now().year - int(request.form.get('tahun_direnovasi', 0) or 0)),
+            'land_building_ratio': tanah / bangunan,
             'kota': kota,
+            'status_tanah': request.form.get('status_tanah') or 'SHM',
             'letak_persil': request.form['letak_persil'],
-            'bentuk_bangunan': request.form['bentuk_bangunan'],
             'kondisi_lingkungan_khusus': request.form['kondisi_lingkungan_khusus'],
-            'lokasi_aset': request.form['lokasi_aset'],
-            'umur_bangunan': int(datetime.datetime.now().year - int(request.form['tahun_dibangun'])),
-            'waktu_sejak_renovasi': int(datetime.datetime.now().year - int(request.form.get('tahun_direnovasi', 0) or 0)),
-            'building_to_land_ratio': bangunan / tanah,
-            'jarak_total': jarak_stasiun + jarak_sekolah + jarak_rumahsakit + jarak_market + jarak_kampus + jarak_halte
+            'bentuk_bangunan_Bertingkat': 1 if request.form['bentuk_bangunan'] == 'Bertingkat' else 0,
+            'bentuk_bangunan_Tidak Bertingkat': 0 if request.form['bentuk_bangunan'] == 'Bertingkat' else 1,
+            'keadaan_lingkungan_Kota': 1 if request.form['keadaan_lingkungan'] == 'Kota' else 0,
+            'keadaan_lingkungan_Pertokoan/Pasar': 1 if request.form['keadaan_lingkungan'] == 'Pertokoan/Pasar' else 0,
+            'keadaan_lingkungan_Perumahan/Pemukiman': 1 if request.form['keadaan_lingkungan'] == 'Perumahan/Pemukiman' else 0,
+            'sarana_transportasi_Cukup Memadai': 1 if request.form['sarana_transportasi'] == 'Cukup Memadai' else 0,
+            'sarana_transportasi_Kurang Memadai': 1 if request.form['sarana_transportasi'] == 'KUrang Memadai' else 0,
+            'sarana_transportasi_Memadai': 1 if request.form['sarana_transportasi'] == 'Memadai' else 0,
+            'lokasi_aset_Belakang': 1 if request.form['lokasi_aset'] == 'Belakang' else 0,
+            'lokasi_aset_Depan': 1 if request.form['lokasi_aset'] == 'Depan' else 0,
+            'lokasi_aset_Tengah':1 if request.form['lokasi_aset'] == 'Tengah' else 0
         }
         print(f"Input vector: {input_vals}")
         # Buat DataFrame dari input
