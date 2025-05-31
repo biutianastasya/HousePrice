@@ -1,3 +1,4 @@
+from math import radians, sin, cos, sqrt, atan2
 from flask import Blueprint, render_template, request, current_app
 from app.models import load_model, load_features, load_poi, compute_nearest_distance
 import numpy as np
@@ -5,6 +6,17 @@ import pandas as pd
 import datetime
 
 main = Blueprint('main', __name__)
+
+
+def haversine_distance(lat1, lon1, lat2, lon2):
+    R = 6371  # Radius of Earth in km
+    lat1, lon1, lat2, lon2 = map(float, (lat1, lon1, lat2, lon2))
+    dlat = radians(lat2 - lat1)
+    dlon = radians(lon2 - lon1)
+    a = sin(dlat/2)**2 + cos(radians(lat1)) * \
+        cos(radians(lat2)) * sin(dlon/2)**2
+    c = 2 * atan2(sqrt(a), sqrt(1-a))
+    return R * c
 
 
 @main.route('/', methods=['GET', 'POST'])
@@ -55,54 +67,43 @@ def index():
                                      jarak_kampus, jarak_market, jarak_stasiun] if not np.isnan(d)]
         dist = min(all_distances) if all_distances else np.nan
 
+        # Compute distance from Jakarta (Monas)
+        monas_lat = -6.1754
+        monas_lon = 106.8272
+        jarak_dari_jakarta = haversine_distance(lat, lon, monas_lat, monas_lon)
+
         input_vals = {
-            'tahun_dibangun': int(request.form['tahun_dibangun']), 
+            'kota': kota,
+            'tahun_dibangun': int(request.form['tahun_dibangun']),
             'tahun_direnovasi': int(request.form.get('tahun_direnovasi', 0) or 0),
             'luas_tanah': tanah,
             'luas_bangunan': bangunan,
+            'status_tanah': request.form.get('status_tanah') or 'SHM',
+            'bentuk_bangunan': request.form['bentuk_bangunan'],
             'listrik': request.form['listrik'],
             'pam': 1 if request.form['air'] == 'PAM' else 0,
             'sumur_pompa': 0 if request.form['air'] == 'pam' else 1,
+            'keadaan_lingkungan': request.form['keadaan_lingkungan'],
             'lebar_jalan_(perkerasan)': int(request.form['lebar_jalan']),
+            'sarana_transportasi': request.form['sarana_transportasi'],
+            'letak_persil': request.form['letak_persil'],
+            'lokasi_aset': request.form['lokasi_aset'],
+            'kondisi_lingkungan_khusus': request.form['kondisi_lingkungan_khusus'],
             'jarak_ke_stasiun_terdekat': jarak_stasiun,
             'jarak_ke_sekolah_terdekat': jarak_sekolah,
             'jarak_ke_rs_terdekat': jarak_rumahsakit,
             'jarak_ke_market_terdekat': jarak_market,
             'jarak_ke_kampus_terdekat': jarak_kampus,
             'jarak_ke_halte_terdekat': jarak_halte,
-            'jarak_dari_jakarta': 10,
+            'jarak_dari_jakarta': jarak_dari_jakarta,
             'building_age': int(datetime.datetime.now().year - int(request.form['tahun_dibangun'])),
             'is_renovated': 1 if request.form.get('tahun_direnovasi') else 0,
             'years_since_renovation': int(datetime.datetime.now().year - int(request.form.get('tahun_direnovasi', 0) or 0)),
-            'land_building_ratio': tanah / bangunan,
-            'kota': kota,
-            'status_tanah': request.form.get('status_tanah') or 'SHM',
-            'letak_persil': request.form['letak_persil'],
-            'kondisi_lingkungan_khusus': request.form['kondisi_lingkungan_khusus'],
-            'bentuk_bangunan_Bertingkat': 1 if request.form['bentuk_bangunan'] == 'Bertingkat' else 0,
-            'bentuk_bangunan_Tidak Bertingkat': 0 if request.form['bentuk_bangunan'] == 'Bertingkat' else 1,
-            'keadaan_lingkungan_Kota': 1 if request.form['keadaan_lingkungan'] == 'Kota' else 0,
-            'keadaan_lingkungan_Pertokoan/Pasar': 1 if request.form['keadaan_lingkungan'] == 'Pertokoan/Pasar' else 0,
-            'keadaan_lingkungan_Perumahan/Pemukiman': 1 if request.form['keadaan_lingkungan'] == 'Perumahan/Pemukiman' else 0,
-            'sarana_transportasi_Cukup Memadai': 1 if request.form['sarana_transportasi'] == 'Cukup Memadai' else 0,
-            'sarana_transportasi_Kurang Memadai': 1 if request.form['sarana_transportasi'] == 'KUrang Memadai' else 0,
-            'sarana_transportasi_Memadai': 1 if request.form['sarana_transportasi'] == 'Memadai' else 0,
-            'lokasi_aset_Belakang': 1 if request.form['lokasi_aset'] == 'Belakang' else 0,
-            'lokasi_aset_Depan': 1 if request.form['lokasi_aset'] == 'Depan' else 0,
-            'lokasi_aset_Tengah':1 if request.form['lokasi_aset'] == 'Tengah' else 0
+            'land_building_ratio': (tanah + 1) / (bangunan + 1)
         }
         print(f"Input vector: {input_vals}")
         # Buat DataFrame dari input
         input_df = pd.DataFrame([input_vals])
-
-        # Periksa apakah semua fitur yang dibutuhkan tersedia
-        missing_features = set(features) - set(input_df.columns)
-        if missing_features:
-            raise ValueError(
-                f"Fitur yang dibutuhkan tidak tersedia: {missing_features}")
-
-        # Seleksi fitur yang dibutuhkan dengan urutan yang sesuai
-        input_df = input_df[features]
 
         # Prediksi dan penjelasan
         pred = model.predict(input_df)[0]
