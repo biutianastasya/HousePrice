@@ -72,6 +72,8 @@ def index():
         monas_lon = 106.8272
         jarak_dari_jakarta = haversine_distance(lat, lon, monas_lat, monas_lon)
 
+        years_since_renovation = int(datetime.datetime.now().year - int(request.form.get('tahun_direnovasi', 0) or 0))
+
         input_vals = {
             'kota': kota,
             'tahun_dibangun': int(request.form['tahun_dibangun']),
@@ -80,9 +82,9 @@ def index():
             'luas_bangunan': bangunan,
             'status_tanah': request.form.get('status_tanah') or 'SHM',
             'bentuk_bangunan': request.form['bentuk_bangunan'],
-            'listrik': request.form['listrik'],
+            'listrik': int(request.form['listrik']),
             'pam': 1 if request.form['air'] == 'PAM' else 0,
-            'sumur_pompa': 0 if request.form['air'] == 'pam' else 1,
+            'sumur_pompa': 0 if request.form['air'] == 'PAM' else 1,
             'keadaan_lingkungan': request.form['keadaan_lingkungan'],
             'lebar_jalan_(perkerasan)': int(request.form['lebar_jalan']),
             'sarana_transportasi': request.form['sarana_transportasi'],
@@ -98,7 +100,7 @@ def index():
             'jarak_dari_jakarta': jarak_dari_jakarta,
             'building_age': int(datetime.datetime.now().year - int(request.form['tahun_dibangun'])),
             'is_renovated': 1 if request.form.get('tahun_direnovasi') else 0,
-            'years_since_renovation': int(datetime.datetime.now().year - int(request.form.get('tahun_direnovasi', 0) or 0)),
+            'years_since_renovation': 0 if years_since_renovation == datetime.datetime.now().year else years_since_renovation,
             'land_building_ratio': (tanah + 1) / (bangunan + 1)
         }
         print(f"Input vector: {input_vals}")
