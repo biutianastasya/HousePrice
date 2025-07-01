@@ -116,8 +116,46 @@ def index():
             top_idx = np.argsort(imps)[::-1][:3]
             explanation = ', '.join([features[i] for i in top_idx])
 
+        # Calculate additional statistics
+        # 1. Harga tanah per meter persegi
+        harga_tanah_per_meter = pred * 0.6 / tanah if tanah > 0 else 0  # Assume 60% of property value is land
+        
+        # 2. Harga bangunan per meter persegi
+        harga_bangunan_per_meter = pred * 0.4 / bangunan if bangunan > 0 else 0  # Assume 40% of property value is building
+        
+        # 3. Prediksi kenaikan 5 tahun (based on various factors)
+        # Base appreciation rate
+        base_rate = 0.06  # 6% base annual appreciation
+        
+        # Location factor (closer to Jakarta = higher appreciation)
+        location_factor = max(0.02, 0.08 - (jarak_dari_jakarta * 0.005))  # Decreases with distance
+        
+        # Age factor (newer buildings appreciate more)
+        building_age = input_vals['building_age']
+        age_factor = max(0.01, 0.05 - (building_age * 0.002))  # Decreases with age
+        
+        # Renovation factor
+        renovation_factor = 0.01 if input_vals['is_renovated'] else 0
+        
+        # Calculate compound annual growth rate
+        annual_growth_rate = base_rate + location_factor + age_factor + renovation_factor
+        
+        # 5-year prediction with compound interest
+        prediksi_5_tahun = pred * ((1 + annual_growth_rate) ** 5)
+        kenaikan_5_tahun = prediksi_5_tahun
+
         # Format the price as currency (Indonesian Rupiah)
-        formatted_price = f"Rp {pred:,.2f}".replace(
+        formatted_price = f"Rp{pred:,.2f}".replace(
+            ",", "X").replace(".", ",").replace("X", ".")
+        
+        # Format additional statistics
+        formatted_harga_tanah_per_meter = f"Rp{harga_tanah_per_meter:,.0f}".replace(
+            ",", "X").replace(".", ",").replace("X", ".")
+        
+        formatted_harga_bangunan_per_meter = f"Rp{harga_bangunan_per_meter:,.0f}".replace(
+            ",", "X").replace(".", ",").replace("X", ".")
+        
+        formatted_kenaikan_5_tahun = f"Rp{kenaikan_5_tahun:,.0f}".replace(
             ",", "X").replace(".", ",").replace("X", ".")
 
         return render_template('result.html', price=formatted_price,
@@ -132,6 +170,21 @@ def index():
                                    'stasiun': round(jarak_stasiun, 2) if not np.isnan(jarak_stasiun) else None
                                },
                                explanation=explanation,
-                               lat=lat, lon=lon)
+                               lat=lat, lon=lon,
+                                luas_tanah=tanah,
+                                luas_bangunan=bangunan,
+                                tahun_dibangun=input_vals['tahun_dibangun'],
+                                tahun_direnovasi=input_vals['tahun_direnovasi'],
+                                lebar_jalan=input_vals['lebar_jalan_(perkerasan)'],
+                                kota=kota,
+                                kode_pos=kode_pos,
+                                keadaan_lingkungan=input_vals['keadaan_lingkungan'],
+                                status_tanah=input_vals['status_tanah'],
+                                bentuk_bangunan=input_vals['bentuk_bangunan'],
+                                # New calculated statistics
+                                harga_tanah_per_meter=formatted_harga_tanah_per_meter,
+                                harga_bangunan_per_meter=formatted_harga_bangunan_per_meter,
+                                prediksi_kenaikan_5_tahun=formatted_kenaikan_5_tahun,
+                                annual_growth_rate=f"{annual_growth_rate*100:.1f}%")
 
     return render_template('index.html')

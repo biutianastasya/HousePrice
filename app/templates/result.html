@@ -1,14 +1,801 @@
-{% extends 'layout.html' %}
-{% block content %}
-<h2>Hasil Prediksi</h2>
-<p><strong>Prediksi Harga:</strong> {{ price }}</p>
-<p><strong>Jarak ke Fasum Terdekat:</strong> {{ distance }} km</p>
-<p><strong>Faktor Utama:</strong> {{ explanation }}</p>
-<div id="map" style="height: 500px;" class="mt-4"></div>
-<script>
-  var map = L.map('map').setView([{{ lat }}, {{ lon }}], 14);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
-  L.marker([{{ lat }}, {{ lon }}]).addTo(map)
-    .bindPopup(`Harga: {{ price }}<br>Jarak: {{ distance }} km<br>Faktor: {{ explanation }}`).openPopup();
-</script>
-{% endblock %}
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D House Visualization</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        :root {
+            --primary-blue: #1e3a8a;
+            --secondary-blue: #3b82f6;
+            --light-blue: #dbeafe;
+            --accent-blue: #60a5fa;
+            --success-green: #10b981;
+            --warning-orange: #f59e0b;
+        }
+
+        body {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container-3d {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(30, 58, 138, 0.15);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-blue), var(--secondary-blue));
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="0.5"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+            opacity: 0.3;
+        }
+
+        .price-display {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .house-type {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .visualization-container {
+            position: relative;
+            height: 600px;
+            overflow: hidden;
+        }
+
+        #house-canvas {
+            width: 100%;
+            height: 100%;
+            cursor: grab;
+        }
+
+        #house-canvas:active {
+            cursor: grabbing;
+        }
+
+        .info-bubble {
+            position: absolute;
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 3px solid var(--secondary-blue);
+            max-width: 300px;
+            transform: translateY(-50%);
+            z-index: 100;
+            opacity: 0;
+            transition: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .info-bubble.show {
+            opacity: 1;
+            animation: bounceIn 0.6s ease-out;
+        }
+
+        .info-bubble::before {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 15px solid transparent;
+        }
+
+        .info-bubble.left::before {
+            right: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-left-color: var(--secondary-blue);
+        }
+
+        .info-bubble.right::before {
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-right-color: var(--secondary-blue);
+        }
+
+        .bubble-header {
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .bubble-content {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 8px 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+            border-left: 4px solid var(--secondary-blue);
+        }
+
+        .stat-label {
+            color: #64748b;
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .facility-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .facility-item {
+            display: flex;
+            align-items: center;
+            font-size: 0.8rem;
+            color: #64748b;
+        }
+
+        .facility-item i {
+            color: var(--secondary-blue);
+            margin-right: 6px;
+            width: 16px;
+        }
+
+        .controls-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            z-index: 50;
+        }
+
+        .control-btn {
+            background: var(--secondary-blue);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            padding: 10px 15px;
+            margin: 5px 0;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+        }
+
+        .control-btn:hover {
+            background: var(--primary-blue);
+            transform: translateY(-2px);
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: var(--primary-blue);
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--light-blue);
+            border-top: 4px solid var(--secondary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes bounceIn {
+            0% {
+                opacity: 0;
+                transform: translateY(-50%) scale(0.3);
+            }
+            50% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1.05);
+            }
+            70% {
+                transform: translateY(-50%) scale(0.9);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(-50%) scale(1);
+            }
+        }
+
+        .interaction-hint {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.7; }
+            50% { opacity: 1; }
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8fafc;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            color: var(--secondary-blue);
+            margin-bottom: 10px;
+        }
+
+        .stat-number {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-blue);
+            margin-bottom: 5px;
+        }
+
+        .stat-description {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .new-prediction-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, var(--accent-blue), #0b2ef7);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.3);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .new-prediction-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(20, 68, 201, 0.4);
+        }
+
+        .new-prediction-btn i {
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="container-3d">
+            <!-- Header with Price Display -->
+            <div class="header-section">
+                <div class="price-display" id="price-display">{{ price }}</div>
+                <div class="house-type" id="house-type">
+                    <i class="fas fa-home me-2"></i>{% if bentuk_bangunan %}{{ bentuk_bangunan }}{% else %}Rumah{% endif %} - {{ kota }}
+                </div>
+            </div>
+
+            <!-- 3D Visualization Container -->
+            <div class="visualization-container">
+                <canvas id="house-canvas"></canvas>
+                
+                <!-- Loading Overlay -->
+                <div class="loading-overlay" id="loading-overlay">
+                    <div class="loading-content">
+                        <div class="spinner"></div>
+                        <h5>Memuat Model 3D...</h5>
+                        <p>Sedang menyiapkan visualisasi rumah impian Anda</p>
+                    </div>
+                </div>
+
+                <!-- Controls Panel -->
+                <div class="controls-panel">
+                    <button class="control-btn" onclick="showBubble('property')">
+                        <i class="fas fa-home me-2"></i>Info Properti
+                    </button>
+                    <button class="control-btn" onclick="showBubble('location')">
+                        <i class="fas fa-map-marker-alt me-2"></i>Lokasi
+                    </button>
+                    <button class="control-btn" onclick="showBubble('facilities')">
+                        <i class="fas fa-building me-2"></i>Fasilitas
+                    </button>
+                    <button class="control-btn" onclick="resetCamera()">
+                        <i class="fas fa-refresh me-2"></i>Reset View
+                    </button>
+                </div>
+
+                <!-- Info Bubbles -->
+                <div class="info-bubble left" id="property-bubble" style="top: 30%; left: 50px;">
+                    <div class="bubble-header">
+                        <i class="fas fa-home me-2"></i>Detail Properti
+                    </div>
+                    <div class="bubble-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Luas Tanah</span>
+                            <span class="stat-value">{{ luas_tanah }} m²</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Luas Bangunan</span>
+                            <span class="stat-value">{{ luas_bangunan }} m²</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Tahun Dibangun</span>
+                            <span class="stat-value">{{ tahun_dibangun }}</span>
+                        </div>
+                        <div class="stat-item">
+                          <span class="stat-label">Tahun Direnovasi</span>
+                          <span class="stat-value">{{ tahun_direnovasi }}</span>
+                      </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Lebar Jalan</span>
+                            <span class="stat-value">{{ lebar_jalan }} m</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-bubble right" id="location-bubble" style="top: 50%; right: 70px;">
+                    <div class="bubble-header">
+                        <i class="fas fa-map-marker-alt me-2"></i>Informasi Lokasi
+                    </div>
+                    <div class="bubble-content">
+                        <div class="stat-item">
+                            <span class="stat-label">Kota</span>
+                            <span class="stat-value">{{ kota }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Kode Pos</span>
+                            <span class="stat-value">{{ kode_pos }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Lingkungan</span>
+                            <span class="stat-value">{{ keadaan_lingkungan }}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Status Tanah</span>
+                            <span class="stat-value">{{ status_tanah }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="info-bubble left" id="facilities-bubble" style="top: 70%; left: 50px;">
+                  <div class="bubble-header">
+                      <i class="fas fa-building me-2"></i>Fasilitas Terdekat
+                  </div>
+                  <div class="bubble-content">
+                      <div class="stat-item">
+                          <span class="stat-label">Sekolah</span>
+                          <span class="stat-value">
+                              {% if distances.sekolah %}{{ distances.sekolah }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                      <div class="stat-item">
+                          <span class="stat-label">RS </span>
+                          <span class="stat-value">
+                              {% if distances.rumahsakit %}{{ distances.rumahsakit }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                      <div class="stat-item">
+                          <span class="stat-label">Halte </span>
+                          <span class="stat-value">
+                              {% if distances.halte %}{{ distances.halte }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                      <div class="stat-item">
+                          <span class="stat-label">Kampus </span>
+                          <span class="stat-value">
+                              {% if distances.kampus %}{{ distances.kampus }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                      <div class="stat-item">
+                          <span class="stat-label">Market </span>
+                          <span class="stat-value">
+                              {% if distances.market %}{{ distances.market }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                      <div class="stat-item">
+                          <span class="stat-label">Stasiun </span>
+                          <span class="stat-value">
+                              {% if distances.stasiun %}{{ distances.stasiun }} km{% else %}-{% endif %}
+                          </span>
+                      </div>
+                  </div>
+              </div>
+
+                <!-- Interaction Hint -->
+                <div class="interaction-hint">
+                    <i class="fas fa-mouse me-2"></i>Drag untuk memutar • Klik tombol untuk info
+                </div>
+            </div>
+
+            <!-- Statistics Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-coins"></i></div>
+                    <div class="stat-number">{{ harga_tanah_per_meter }}</div>
+                    <div class="stat-description">Harga Tanah per m²</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-hammer"></i></div>
+                    <div class="stat-number">{{ harga_bangunan_per_meter }}</div>
+                    <div class="stat-description">Harga Bangunan per m²</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-chart-line"></i></div>
+                    <div class="stat-number">{{ prediksi_kenaikan_5_tahun }}</div>
+                    <div class="stat-description">Prediksi Kenaikan 5 Tahun</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating New Prediction Button -->
+    <button class="new-prediction-btn" onclick="goBackToForm()">
+        <i class="fas fa-plus"></i>Prediksi Baru
+    </button>
+
+    <script>
+        let scene, camera, renderer, house, controls;
+        let mouseX = 0, mouseY = 0;
+        let targetRotationX = 0, targetRotationY = 0;
+        let isMouseDown = false;
+        let currentBubble = null;
+
+        function init() {
+            const canvas = document.getElementById('house-canvas');
+            const container = canvas.parentElement;
+            
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0xf0f9ff);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(75, container.offsetWidth / container.offsetHeight, 0.1, 1000);
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+            // Lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(10, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.mapSize.width = 2048;
+            directionalLight.shadow.mapSize.height = 2048;
+            scene.add(directionalLight);
+
+            // Create house based on type
+            createHouse(isMultiStory);
+
+            // Ground
+            const groundGeometry = new THREE.PlaneGeometry(20, 20);
+            const groundMaterial = new THREE.MeshLambertMaterial({ color: 0x90EE90 });
+            const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+            ground.rotation.x = -Math.PI / 2;
+            ground.receiveShadow = true;
+            scene.add(ground);
+
+            // Event listeners
+            setupEventListeners();
+
+            // Hide loading overlay
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 500);
+            }, 2000);
+
+            // Start animation
+            animate();
+            
+        }
+
+        var isMultiStory = ("{{ bentuk_bangunan }}" === "Bertingkat"); // true for two-story, false for one-story
+
+        function createHouse(isMultiStory) {
+            if (house) {
+              scene.remove(house);
+              }
+            house = new THREE.Group();
+            var material = new THREE.MeshPhongMaterial({ color: 0xffffff, flatShading: true });
+
+            // House colors
+            const wallColor = 0xF5DEB3; // Wheat
+            const roofColor = 0x8B4513; // SaddleBrown
+            const doorColor = 0x654321; // Dark brown
+            const windowColor = 0x87CEEB; // SkyBlue
+
+            if (isMultiStory) {
+                // First floor
+                const firstFloorGeometry = new THREE.BoxGeometry(3, 2, 3);
+                const firstFloorMaterial = new THREE.MeshLambertMaterial({ color: wallColor });
+                const firstFloor = new THREE.Mesh(firstFloorGeometry, firstFloorMaterial);
+                firstFloor.position.y = 1;
+                firstFloor.castShadow = true;
+                house.add(firstFloor);
+
+                // Second floor
+                const secondFloorGeometry = new THREE.BoxGeometry(2.5, 1.8, 2.5);
+                const secondFloorMaterial = new THREE.MeshLambertMaterial({ color: wallColor });
+                const secondFloor = new THREE.Mesh(secondFloorGeometry, secondFloorMaterial);
+                secondFloor.position.y = 2.9;
+                secondFloor.castShadow = true;
+                house.add(secondFloor);
+
+                // Roof for two-story
+                const roofGeometry = new THREE.ConeGeometry(2.2, 1.5, 4);
+                const roofMaterial = new THREE.MeshLambertMaterial({ color: roofColor });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = 4.6;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                house.add(roof);
+            } else {
+                // Single floor
+                const floorGeometry = new THREE.BoxGeometry(4, 2.5, 4);
+                const floorMaterial = new THREE.MeshLambertMaterial({ color: wallColor });
+                const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+                floor.position.y = 1.25;
+                floor.castShadow = true;
+                house.add(floor);
+
+                // Roof for single-story
+                const roofGeometry = new THREE.ConeGeometry(3, 1.8, 4);
+                const roofMaterial = new THREE.MeshLambertMaterial({ color: roofColor });
+                const roof = new THREE.Mesh(roofGeometry, roofMaterial);
+                roof.position.y = 3.4;
+                roof.rotation.y = Math.PI / 4;
+                roof.castShadow = true;
+                house.add(roof);
+            }
+
+            // Door
+            const doorGeometry = new THREE.BoxGeometry(0.05, 1.8, 0.8);
+            const doorMaterial = new THREE.MeshLambertMaterial({ color: doorColor });
+            const door = new THREE.Mesh(doorGeometry, doorMaterial);
+            door.position.set(1.52, 0.9, 0);
+            house.add(door);
+
+            // Windows
+            const windowGeometry = new THREE.BoxGeometry(0.05, 0.8, 0.8);
+            const windowMaterial = new THREE.MeshLambertMaterial({ color: windowColor });
+            
+            // Front windows
+            const window1 = new THREE.Mesh(windowGeometry, windowMaterial);
+            window1.position.set(1.52, 1.2, -1);
+            house.add(window1);
+
+            const window2 = new THREE.Mesh(windowGeometry, windowMaterial);
+            window2.position.set(1.52, 1.2, 1);
+            house.add(window2);
+
+            // Side windows
+            const sideWindowGeometry = new THREE.BoxGeometry(0.8, 0.8, 0.05);
+            const window3 = new THREE.Mesh(sideWindowGeometry, windowMaterial);
+            window3.position.set(0, 1.2, 1.52);
+            house.add(window3);
+
+            const window4 = new THREE.Mesh(sideWindowGeometry, windowMaterial);
+            window4.position.set(0, 1.2, -1.52);
+            house.add(window4);
+
+            scene.add(house);
+        }
+
+        function setupEventListeners() {
+            const canvas = document.getElementById('house-canvas');
+
+            canvas.addEventListener('mousedown', onMouseDown);
+            canvas.addEventListener('mouseup', onMouseUp);
+            canvas.addEventListener('mousemove', onMouseMove);
+            canvas.addEventListener('wheel', onWheel);
+
+            window.addEventListener('resize', onWindowResize);
+        }
+
+        function onMouseDown(event) {
+            isMouseDown = true;
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onMouseUp() {
+            isMouseDown = false;
+        }
+
+        function onMouseMove(event) {
+            if (!isMouseDown) return;
+
+            const deltaX = event.clientX - mouseX;
+            const deltaY = event.clientY - mouseY;
+
+            targetRotationY += deltaX * 0.01;
+            targetRotationX += deltaY * 0.01;
+
+            mouseX = event.clientX;
+            mouseY = event.clientY;
+        }
+
+        function onWheel(event) {
+            camera.position.multiplyScalar(event.deltaY > 0 ? 1.1 : 0.9);
+            camera.position.clampLength(3, 15);
+        }
+
+        function onWindowResize() {
+            const container = document.getElementById('house-canvas').parentElement;
+            camera.aspect = container.offsetWidth / container.offsetHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(container.offsetWidth, container.offsetHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Smooth rotation
+            if (house) {
+                house.rotation.y += (targetRotationY - house.rotation.y) * 0.05;
+                house.rotation.x += (targetRotationX - house.rotation.x) * 0.05;
+                
+                // Limit vertical rotation
+                house.rotation.x = Math.max(-Math.PI/4, Math.min(Math.PI/4, house.rotation.x));
+            }
+
+            renderer.render(scene, camera);
+        }
+
+        function showBubble(type) {
+            // Hide all bubbles first
+            hideAllBubbles();
+
+            const bubble = document.getElementById(type + '-bubble');
+            if (bubble) {
+                currentBubble = bubble;
+                setTimeout(() => {
+                    bubble.classList.add('show');
+                }, 100);
+
+                // Auto-hide after 5 seconds
+                setTimeout(() => {
+                    if (currentBubble === bubble) {
+                        hideBubble(bubble);
+                    }
+                }, 5000);
+            }
+        }
+
+        function hideAllBubbles() {
+            const bubbles = document.querySelectorAll('.info-bubble');
+            bubbles.forEach(bubble => {
+                bubble.classList.remove('show');
+            });
+            currentBubble = null;
+        }
+
+        function hideBubble(bubble) {
+            bubble.classList.remove('show');
+            if (currentBubble === bubble) {
+                currentBubble = null;
+            }
+        }
+
+        function resetCamera() {
+            targetRotationX = 0;
+            targetRotationY = 0;
+            camera.position.set(5, 5, 5);
+            camera.lookAt(0, 0, 0);
+            camera.lookAt(0, 0, 0);
+            if (house) {
+                house.rotation.set(0, 0, 0);
+            }
+            hideAllBubbles();   
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', init);
+
+        // Function to go back to the form
+        function goBackToForm() {
+            window.location.href = '/'; // Adjust this URL to your form page
+        }
+
+        // Demo: Show bubbles in sequence after loading
+        setTimeout(() => {
+            showBubble('property');
+            setTimeout(() => {
+                showBubble('location');
+                setTimeout(() => {
+                    showBubble('facilities');
+                }, 2000);
+            }, 2000);
+        }, 3000);
+    </script>
+</body>
+</html>

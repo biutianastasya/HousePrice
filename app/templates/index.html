@@ -1,207 +1,445 @@
-{% extends 'layout.html' %} {% block content %}
-<h1>Prediksi Harga Rumah Jabodetabek</h1>
-{% if error %}
-<div class="alert alert-danger">{{ error }}</div>
-{% endif %}
-<form method="POST" id="prediction-form" novalidate>
-  <div class="row">
-    <div class="col-md-6">
-      <label for="luas_tanah">Luas Tanah (m²)</label>
-      <input type="number" step="0.01" name="luas_tanah" id="luas_tanah" class="form-control" required min="1" />
-      <div class="invalid-feedback">
-        Mohon masukkan luas tanah yang valid (minimal 1 m²)
+{% extends 'layout.html' %} 
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    <div class="card card-custom">
+      <div class="card-body p-4">
+
+        
+        {% if error %}
+        <div class="alert alert-danger alert-custom">
+          <i class="fas fa-exclamation-triangle me-2"></i>
+          {{ error }}
+        </div>
+        {% endif %}
+
+        <form method="POST" id="prediction-form" novalidate>
+          <!-- Property Details Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-building me-2"></i>Detail Properti
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <div class="input-group-custom">
+                  <label for="luas_tanah" class="form-label">Luas Tanah</label>
+                  <input type="number" step="0.01" name="luas_tanah" id="luas_tanah" 
+                         class="form-control" required min="1" placeholder="Masukkan luas tanah" />
+                  <div class="floating-icon">m²</div>
+                  <div class="invalid-feedback">
+                    Mohon masukkan luas tanah yang valid (minimal 1 m²)
+                  </div>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="input-group-custom">
+                  <label for="luas_bangunan" class="form-label">Luas Bangunan</label>
+                  <input type="number" step="0.01" name="luas_bangunan" id="luas_bangunan" 
+                         class="form-control" required min="1" placeholder="Masukkan luas bangunan" />
+                  <div class="floating-icon">m²</div>
+                  <div class="invalid-feedback">
+                    Mohon masukkan luas bangunan yang valid (minimal 1 m²)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Building Info Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-hammer me-2"></i>Informasi Bangunan
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="tahun_dibangun" class="form-label">Tahun Dibangun</label>
+                <input type="number" name="tahun_dibangun" id="tahun_dibangun" 
+                       class="form-control" required min="1900" max="2025" 
+                       placeholder="Contoh: 2020" />
+                <div class="invalid-feedback">
+                  Masukkan tahun dibangun yang valid (1900-2025)
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label for="tahun_direnovasi" class="form-label">Tahun Direnovasi</label>
+                <input type="number" name="tahun_direnovasi" id="tahun_direnovasi" 
+                       class="form-control" min="1900" max="2025" 
+                       placeholder="Kosong jika belum" />
+                <div class="invalid-feedback">
+                  Masukkan tahun renovasi yang valid
+                </div>
+              </div>
+              <div class="col-md-4">
+                <div class="input-group-custom">
+                  <label for="lebar_jalan" class="form-label">Lebar Jalan</label>
+                  <input type="number" name="lebar_jalan" id="lebar_jalan" 
+                         class="form-control" required min="0" max="100" 
+                         placeholder="Contoh: 6" />
+                  <div class="floating-icon">m</div>
+                  <div class="invalid-feedback">
+                    Masukkan lebar jalan yang valid (0-100 meter)
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Facilities Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-cog me-2"></i>Fasilitas & Lingkungan
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="air" class="form-label">Sumber Air</label>
+                <select name="air" id="air" class="form-select" required>
+                  <option value="">Pilih sumber air</option>
+                  <option value="PAM">PAM</option>
+                  <option value="Sumur Pompa">Sumur Pompa</option>
+                </select>
+                <div class="invalid-feedback">Pilih sumber air</div>
+              </div>
+              <div class="col-md-4">
+                <label for="keadaan_lingkungan" class="form-label">Keadaan Lingkungan</label>
+                <select name="keadaan_lingkungan" id="keadaan_lingkungan" class="form-select" required>
+                  <option value="">Pilih lingkungan</option>
+                  <option value="Kota">Kota</option>
+                  <option value="Pertokoan/Pasar">Pertokoan/Pasar</option>
+                  <option value="Perumahan/Pemukiman">Perumahan/Pemukiman</option>
+                </select>
+                <div class="invalid-feedback">Pilih keadaan lingkungan</div>
+              </div>
+              <div class="col-md-4">
+                <label for="sarana_transportasi" class="form-label">Sarana Transportasi</label>
+                <select name="sarana_transportasi" id="sarana_transportasi" class="form-select" required>
+                  <option value="">Pilih transportasi</option>
+                  <option value="Memadai">Memadai</option>
+                  <option value="Cukup Memadai">Cukup Memadai</option>
+                  <option value="Kurang Memadai">Kurang Memadai</option>
+                </select>
+                <div class="invalid-feedback">Pilih sarana transportasi</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legal & Structure Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-file-contract me-2"></i>Status Legal & Struktur
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="status_tanah" class="form-label">Status Tanah</label>
+                <select name="status_tanah" id="status_tanah" class="form-select" required>
+                  <option value="">Pilih status tanah</option>
+                  <option value="-">-</option>
+                  <option value="SHM">SHM (Sertifikat Hak Milik)</option>
+                  <option value="SHGB">SHGB (Sertifikat Hak Guna Bangunan)</option>
+                  <option value="PPJB">PPJB (Perjanjian Pengikatan Jual Beli)</option>
+                  <option value="Lain-Lain:">Lain - Lain</option>
+                </select>
+                <div class="invalid-feedback">Pilih status tanah</div>
+              </div>
+              <div class="col-md-6">
+                <label for="bentuk_bangunan" class="form-label">Bentuk Bangunan</label>
+                <select name="bentuk_bangunan" id="bentuk_bangunan" class="form-select" required>
+                  <option value="">Pilih bentuk bangunan</option>
+                  <option value="Tidak Bertingkat">Tidak Bertingkat</option>
+                  <option value="Bertingkat">Bertingkat</option>
+                </select>
+                <div class="invalid-feedback">Pilih bentuk bangunan</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Details Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-map-marker-alt me-2"></i>Detail Lokasi
+            </h5>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label for="kondisi_lingkungan_khusus" class="form-label">Kondisi Lingkungan Khusus</label>
+                <select name="kondisi_lingkungan_khusus" id="kondisi_lingkungan_khusus" class="form-select" required>
+                  <option value="">Pilih kondisi</option>
+                  <option value="-">-</option>
+                  <option value="Bebas Banjir">Bebas Banjir</option>
+                  <option value="Banjir Musiman">Banjir Musiman</option>
+                  <option value="Dekat Tempat Ibadah">Dekat Tempat Ibadah</option>
+                  <option value="Dekat Tegangan Tinggi">Dekat Tegangan Tinggi</option>
+                </select>
+                <div class="invalid-feedback">Pilih kondisi lingkungan</div>
+              </div>
+              <div class="col-md-4">
+                <label for="letak_persil" class="form-label">Letak Persil</label>
+                <select name="letak_persil" id="letak_persil" class="form-select" required>
+                  <option value="">Pilih letak persil</option>
+                  <option value="Tengah">Tengah</option>
+                  <option value="Sudut/ Pojok">Sudut/Pojok</option>
+                  <option value="Pojok">Pojok</option>
+                  <option value="Tusuk Sate">Tusuk Sate</option>
+                  <option value="Tusuk sate sebagian">Tusuk Sate Sebagian</option>
+                  <option value="Hoek dan Tusuk Sate">Hook dan Tusuk Sate</option>
+                  <option value="Hoek">Hook</option>
+                </select>
+                <div class="invalid-feedback">Pilih letak persil</div>
+              </div>
+              <div class="col-md-4">
+                <label for="lokasi_aset" class="form-label">Lokasi Aset</label>
+                <select name="lokasi_aset" id="lokasi_aset" class="form-select" required>
+                  <option value="">Pilih lokasi aset</option>
+                  <option value="Tengah">Tengah</option>
+                  <option value="Belakang">Belakang</option>
+                  <option value="Depan">Depan</option>
+                </select>
+                <div class="invalid-feedback">Pilih lokasi aset</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Utilities Section -->
+          <div class="mb-4">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-plug me-2"></i>Utilitas
+            </h5>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" name="listrik" id="listrik" value="1">
+              <label class="form-check-label" for="listrik">
+                <i class="fas fa-bolt me-2"></i>Tersedia Listrik
+              </label>
+            </div>
+          </div>
+
+          <!-- Location Mode Section -->
+          <div class="mode-toggle">
+            <h5 class="text-primary-blue mb-3">
+              <i class="fas fa-location-arrow me-2"></i>Pilih Metode Lokasi
+            </h5>
+            <div class="row">
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-maps" value="maps" checked>
+                  <label class="form-check-label" for="mode-maps">
+                    <i class="fas fa-map me-2"></i>Gunakan Peta Interaktif
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="mode" id="mode-manual" value="manual">
+                  <label class="form-check-label" for="mode-manual">
+                    <i class="fas fa-keyboard me-2"></i>Input Manual
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Maps Container -->
+          <div id="maps-container">
+            <div class="mb-4">
+              <label for="alamat" class="form-label">
+                <i class="fas fa-search me-2"></i>Cari Alamat
+              </label>
+              <input type="text" name="alamat" id="alamat-input" class="form-control" 
+                     placeholder="Ketik alamat lengkap..." list="address-suggestions" 
+                     autocomplete="off" required />
+              <datalist id="address-suggestions"></datalist>
+              <div class="invalid-feedback">Mohon masukkan alamat yang valid</div>
+            </div>
+            
+            <div class="map-container">
+              <div class="map-overlay">
+                <div class="alert alert-custom mb-0">
+                  <i class="fas fa-info-circle me-2"></i>
+                  <strong>Petunjuk:</strong> Klik pada peta untuk menentukan lokasi atau gunakan pencarian alamat di atas
+                </div>
+              </div>
+              <div id="map" style="height: 500px;"></div>
+            </div>
+          </div>
+
+          <!-- Manual Container -->
+          <div id="manual-container" style="display: none;">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label for="latitude" class="form-label">Latitude</label>
+                <input type="text" name="lat" id="latitude" class="form-control" 
+                       placeholder="-6.2088" />
+                <div class="invalid-feedback">
+                  Latitude harus berupa angka (contoh: -6.2088)
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="longitude" class="form-label">Longitude</label>
+                <input type="text" name="lon" id="longitude" class="form-control" 
+                       placeholder="106.8456" />
+                <div class="invalid-feedback">
+                  Longitude harus berupa angka (contoh: 106.8456)
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label for="kota" class="form-label">Kota</label>
+                <input type="text" name="kota" id="kota" class="form-control" 
+                       placeholder="Jakarta Selatan" />
+                <div class="invalid-feedback">Mohon masukkan nama kota</div>
+              </div>
+              <div class="col-md-6">
+                <label for="kode_pos" class="form-label">Kode Pos</label>
+                <input type="text" name="kode_pos" id="kode_pos" class="form-control" 
+                       placeholder="12345" />
+                <div class="invalid-feedback">Mohon masukkan kode pos</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Hidden fields for geocoding data -->
+          <div style="display: none">
+            <input type="hidden" name="hidden_lat" id="hidden-lat" />
+            <input type="hidden" name="hidden_lon" id="hidden-lon" />
+            <input type="hidden" name="hidden_kota" id="hidden-kota" />
+            <input type="hidden" name="hidden_kode_pos" id="hidden-kode_pos" />
+          </div>
+
+          <div class="text-center mt-5">
+            <button type="submit" class="btn btn-primary-custom btn-lg">
+              <i class="fas fa-calculator me-2"></i>
+              Hitung Prediksi Harga
+            </button>
+          </div>
+        </form>
       </div>
     </div>
-    <div class="col-md-6">
-      <label for="luas_bangunan">Luas Bangunan (m²)</label>
-      <input type="number" step="0.01" name="luas_bangunan" id="luas_bangunan" class="form-control" required min="1" />
-      <div class="invalid-feedback">
-        Mohon masukkan luas bangunan yang valid (minimal 1 m²)
-      </div>
-    </div>
   </div>
+</div>
 
-  <div class="row mt-2">
-    <div class="col-md-4">
-      <label for="tahun_dibangun">Tahun Dibangun</label>
-      <input type="number" name="tahun_dibangun" id="tahun_dibangun" class="form-control" required min="1900"
-        max="2025" />
-      <div class="invalid-feedback">
-        Masukkan tahun dibangun yang valid (1900-2025)
-      </div>
-    </div>
-    <div class="col-md-4">
-      <label for="tahun_direnovasi">Tahun Direnovasi</label>
-      <input type="number" name="tahun_direnovasi" id="tahun_direnovasi" class="form-control" min="1900" max="2025" />
-      <div class="invalid-feedback">
-        Masukkan tahun renovasi yang valid (kosong jika belum direnovasi)
-      </div>
-    </div>
-    <div class="col-md-4">
-      <label for="lebar_jalan">Lebar Jalan (m)</label>
-      <input type="number" name="lebar_jalan" id="lebar_jalan" class="form-control" required min="0" max="100" />
-      <div class="invalid-feedback">
-        Masukkan lebar jalan yang valid (1-100 meter)
-      </div>
-    </div>
-  </div>
+<style>
+  .map-container {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+  }
 
-  <div class="row mt-2">
-    <div class="col-md-4">
-      <label for="air">Air</label>
-      <select name="air" id="air" class="form-select" required>
-        <option value="PAM">PAM</option>
-        <option value="Sumur Pompa">Sumur Pompa</option>
-      </select>
-      <div class="invalid-feedback">Pilih sumber air</div>
-    </div>
-    <div class="col-md-4">
-      <label for="keadaan_lingkungan">Keadaan Lingkungan</label>
-      <select name="keadaan_lingkungan" id="keadaan_lingkungan" class="form-select" required>
-        <option value="Kota">Kota</option>
-        <option value="Pertokoan/Pasar">Pertokoan/Pasar</option>
-        <option value="Perumahan/Pemukiman">Perumahan/Pemukiman</option>
-      </select>
-      <div class="invalid-feedback">Pilih keadaan lingkungan</div>
-    </div>
-    <div class="col-md-4">
-      <label for="sarana_transportasi">Sarana Transportasi</label>
-      <select name="sarana_transportasi" id="sarana_transportasi" class="form-select" required>
-        <option value="Memadai">Memadai</option>
-        <option value="Cukup Memadai">Cukup Memadai</option>
-        <option value="Kurang Memadai">Kurang Memadai</option>
-      </select>
-      <div class="invalid-feedback">Pilih sarana transportasi</div>
-    </div>
-  </div>
+  .map-overlay {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 8px;
+    padding: 10px;
+    backdrop-filter: blur(10px);
+  }
 
-  <div class="row mt-2">
-    <div class="col-md-6">
-      <label for="status_tanah">Status Tanah</label>
-      <select name="status_tanah" id="status_tanah" class="form-select" required>
-        <option value="-">-</option>
-        <option value="SHM">SHM (Sertifikat Hak Milik)</option>
-        <option value="SHGB">SHGB (Sertifikat Hak Guna Bangunan)</option>
-        <option value="PPJB">PPJB (Perjanjian Pengikatan Jual Beli)</option>
-        <option value="Lain-Lain:">Lain - Lain</option>
-      </select>
-      <div class="invalid-feedback">Pilih status tanah</div>
-    </div>
-    <div class="col-md-6">
-      <label for="bentuk_bangunan">Bentuk Bangunan</label>
-      <select name="bentuk_bangunan" id="bentuk_bangunan" class="form-select" required>
-        <option value="Tidak Bertingkat">Tidak Bertingkat</option>
-        <option value="Bertingkat">Bertingkat</option>
-      </select>
-      <div class="invalid-feedback">Pilih bentuk bangunan</div>
-    </div>
-  </div>
+  .custom-div-icon {
+    background: none;
+    border: none;
+  }
 
-  <div class="row mt-2">
-    <div class="col-md-4">
-      <label for="kondisi_lingkungan_khusus">Kondisi Lingkungan Khusus</label>
-      <select name="kondisi_lingkungan_khusus" id="kondisi_lingkungan_khusus" class="form-select" required>
-        <option value="-">-</option>
-        <option value="Bebas Banjir">Bebas Banjir</option>
-        <option value="Banjir Musiman">Banjir Musiman</option>
-        <option value="Dekat Tempat Ibadah">Dekat Tempat Ibadah</option>
-        <option value="Dekat Tegangan Tinggi">Dekat Tegangan Tinggi</option>
-      </select>
-      <div class="invalid-feedback">Pilih kondisi lingkungan</div>
-    </div>
-    <div class="col-md-4">
-      <label for="letak_persil">Letak Persil</label>
-      <select name="letak_persil" id="letak_persil" class="form-select" required>
-        <option value="Tengah">Tengah</option>
-        <option value="Sudut/ Pojok">Sudut/Pojok</option>
-        <option value="Pojok">Pojok</option>
-        <option value="Tusuk Sate">Tusuk Sate</option>
-        <option value="Tusuk sate sebagian">Tusuk Sate Sebagian</option>
-        <option value="Hoek dan Tusuk Sate">Hook dan Tusuk Sate</option>
-        <option value="Hoek">Hook</option>
-      </select>
-      <div class="invalid-feedback">Pilih letak persil</div>
-    </div>
-    <div class="col-md-4">
-      <label for="lokasi_aset">Lokasi Aset</label>
-      <select name="lokasi_aset" id="lokasi_aset" class="form-select" required>
-        <option value="Tengah">Tengah</option>
-        <option value="Belakang">Belakang</option>
-        <option value="Depan">Depan</option>
-      </select>
-      <div class="invalid-feedback">Pilih lokasi aset</div>
-    </div>
-  </div>
+  .input-group-custom {
+    position: relative;
+  }
 
-  <div class="row mt-2">
-    <div class="col-md-4">
-      <div class="form-check">
-        <input type="checkbox" class="form-check-input" name="listrik" id="listrik" value="1" />
-        <label class="form-check-label" for="listrik">Listrik</label>
-      </div>
-    </div>
-  </div>
+  .floating-icon {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+    font-size: 0.9rem;
+    pointer-events: none;
+  }
 
-  <div class="mt-3">
-    <label class="d-block">Mode Lokasi:</label>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="mode" id="mode-maps" value="maps" checked />
-      <label class="form-check-label" for="mode-maps">Peta</label>
-    </div>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="mode" id="mode-manual" value="manual" />
-      <label class="form-check-label" for="mode-manual">Manual</label>
-    </div>
-  </div>
+  .btn-primary-custom {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+    border: none;
+    padding: 12px 30px;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
 
-  <div class="mt-2" id="maps-container">
-    <div class="mb-3">
-      <label for="alamat">Alamat</label>
-      <input type="text" name="alamat" id="alamat-input" class="form-control" placeholder="Masukkan alamat..."
-        list="address-suggestions" autocomplete="off" required />
-      <datalist id="address-suggestions"></datalist>
-      <div class="invalid-feedback">Mohon masukkan alamat yang valid</div>
-    </div>
-    <div id="map" style="height: 400px" class="mb-3"></div>
-  </div>
+  .btn-primary-custom:hover {
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+  }
 
-  <div class="row mt-2" id="manual-container" style="display: none">
-    <div class="col-md-6">
-      <label for="latitude">Latitude</label>
-      <input type="text" name="lat" id="latitude" class="form-control" placeholder="-6.2088" />
-      <div class="invalid-feedback">
-        Latitude harus berupa angka (contoh: -6.2088)
-      </div>
-    </div>
-    <div class="col-md-6">
-      <label for="longitude">Longitude</label>
-      <input type="text" name="lon" id="longitude" class="form-control" placeholder="106.8456" />
-      <div class="invalid-feedback">
-        Longitude harus berupa angka (contoh: 106.8456)
-      </div>
-    </div>
-    <div class="col-md-6 mt-2">
-      <label for="kota">Kota</label>
-      <input type="text" name="kota" id="kota" class="form-control" placeholder="Jakarta Selatan" />
-      <div class="invalid-feedback">Mohon masukkan nama kota</div>
-    </div>
-    <div class="col-md-6 mt-2">
-      <label for="kode_pos">Kode Pos</label>
-      <input type="text" name="kode_pos" id="kode_pos" class="form-control" placeholder="12345" />
-      <div class="invalid-feedback">Mohon masukkan kode pos</div>
-    </div>
-  </div>
+  .text-primary-blue {
+    color: #3b82f6 !important;
+  }
 
-  <!-- Hidden fields for geocoding data -->
-  <div style="display: none">
-    <input type="hidden" name="hidden_lat" id="hidden-lat" />
-    <input type="hidden" name="hidden_lon" id="hidden-lon" />
-    <input type="hidden" name="hidden_kota" id="hidden-kota" />
-    <input type="hidden" name="hidden_kode_pos" id="hidden-kode_pos" />
-  </div>
+  .card-custom {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
 
-  <button type="submit" class="btn btn-primary mt-4">Prediksi</button>
-</form>
+  .section-title {
+    color: #1e40af;
+    font-weight: 700;
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  .alert-custom {
+    border-radius: 10px;
+    border: none;
+    font-weight: 500;
+  }
+
+  .form-control, .form-select {
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    padding: 12px 15px;
+    transition: all 0.3s ease;
+  }
+
+  .form-control:focus, .form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+  }
+
+  .form-check-input:checked {
+    background-color: #3b82f6;
+    border-color: #3b82f6;
+  }
+
+  .mode-toggle {
+    background: #f8fafc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 2rem;
+  }
+
+  #map {
+    border-radius: 10px;
+  }
+
+  .leaflet-control-zoom {
+    border: none !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .leaflet-control-zoom a {
+    background: white !important;
+    color: #3b82f6 !important;
+    border: none !important;
+    font-size: 16px !important;
+    font-weight: bold !important;
+  }
+
+  .leaflet-control-zoom a:hover {
+    background: #f3f4f6 !important;
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
 
 <script>
   // Jakarta center coordinates (Monas)
@@ -220,23 +458,27 @@
     return R * c; // Distance in km
   }
 
-  // Inisialisasi peta
-  var map = L.map("map").setView([-6.2, 106.816666], 11);
-  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png").addTo(map);
+  // Custom map style with blue theme
+  var map = L.map("map", {
+    zoomControl: false,
+    attributionControl: false
+  }).setView([-6.2, 106.816666], 11);
+  
+  // Add custom zoom control
+  L.control.zoom({
+    position: 'bottomright'
+  }).addTo(map);
+
+  // Blue-themed tile layer
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '',
+    className: 'map-tiles'
+  }).addTo(map);
+
   var marker;
 
   // Store geocoding data
   window.markerAddressDetails = null;
-
-  // Tambahkan kontrol untuk instruksi kepada user
-  var info = L.control({ position: "topleft" });
-  info.onAdd = function () {
-    var div = L.DomUtil.create("div", "info");
-    div.innerHTML =
-      '<div class="alert alert-info p-2" style="opacity: 0.8;">Klik pada peta untuk menentukan lokasi atau ketik alamat di kolom isian</div>';
-    return div;
-  };
-  info.addTo(map);
 
   let suggestionsData = [];
   const dataList = document.getElementById("address-suggestions");
@@ -269,20 +511,18 @@
     }
   });
 
-  document
-    .getElementById("mode-manual")
-    .addEventListener("change", function () {
-      if (this.checked) {
-        document.getElementById("maps-container").style.display = "none";
-        document.getElementById("manual-container").style.display = "flex";
-        // Copy values from map marker if it exists
-        if (marker) {
-          const position = marker.getLatLng();
-          latitudeInput.value = position.lat.toFixed(6);
-          longitudeInput.value = position.lng.toFixed(6);
-        }
+  document.getElementById("mode-manual").addEventListener("change", function () {
+    if (this.checked) {
+      document.getElementById("maps-container").style.display = "none";
+      document.getElementById("manual-container").style.display = "block";
+      // Copy values from map marker if it exists
+      if (marker) {
+        const position = marker.getLatLng();
+        latitudeInput.value = position.lat.toFixed(6);
+        longitudeInput.value = position.lng.toFixed(6);
       }
-    });
+    }
+  });
 
   // Function untuk melakukan reverse geocoding
   async function reverseGeocode(lat, lng) {
@@ -300,6 +540,13 @@
     }
   }
 
+  // Custom marker icon
+  const customIcon = L.divIcon({
+    html: '<i class="fas fa-map-marker-alt" style="color: #3b82f6; font-size: 24px;"></i>',
+    iconSize: [30, 30],
+    className: 'custom-div-icon'
+  });
+
   // Event handler untuk klik peta
   map.on("click", async function (e) {
     const lat = e.latlng.lat;
@@ -311,7 +558,10 @@
     }
 
     // Tambahkan marker baru yang bisa didrag
-    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    marker = L.marker([lat, lng], { 
+      draggable: true,
+      icon: customIcon
+    }).addTo(map);
 
     // Update manual inputs
     latitudeInput.value = lat.toFixed(6);
@@ -321,7 +571,7 @@
     const geoData = await reverseGeocode(lat, lng);
     if (geoData && geoData.display_name) {
       addressInput.value = geoData.display_name;
-      window.markerAddressDetails = geoData; // Store the full geocoding response
+      window.markerAddressDetails = geoData;
     }
 
     // Event handler untuk marker yang didrag
@@ -337,8 +587,9 @@
       const geoData = await reverseGeocode(newLat, newLng);
       if (geoData && geoData.display_name) {
         addressInput.value = geoData.display_name;
-        window.markerAddressDetails = geoData; // Store the full geocoding response
-      }    });
+        window.markerAddressDetails = geoData;
+      }
+    });
   });
 
   // Autocomplete suggestions with debounce
@@ -360,41 +611,59 @@
       fetch(
         `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(
           query
-        )}`
+        )}&countrycodes=id&limit=5`,
+        { headers: { "User-Agent": "RealEstateApp/1.0 (alifbiuti@gmail.com)" } }
       )
-        .then((res) => res.json())
+        .then((response) => response.json())
         .then((data) => {
-          suggestionsData = data;
           dataList.innerHTML = "";
-          data.forEach((item) => {
+          suggestionsData = data;
+          data.forEach((item, index) => {
             const option = document.createElement("option");
             option.value = item.display_name;
+            option.dataset.index = index;
             dataList.appendChild(option);
           });
+        })
+        .catch((error) => {
+          console.error("Error fetching suggestions:", error);
         });
-    }, 1000); // 1 second delay
+    }, 300);
   });
 
-  // Saat user memilih alamat dari list
+  // Handle address selection
   addressInput.addEventListener("change", function () {
-    const selected = this.value;
-    const item = suggestionsData.find((d) => d.display_name === selected);
-    if (item) {
-      const lat = parseFloat(item.lat);
-      const lon = parseFloat(item.lon);
+    const selectedAddress = this.value;
+    const selectedData = suggestionsData.find(
+      (item) => item.display_name === selectedAddress
+    );
+
+    if (selectedData) {
+      const lat = parseFloat(selectedData.lat);
+      const lng = parseFloat(selectedData.lon);
+
+      // Remove existing marker
+      if (marker) {
+        map.removeLayer(marker);
+      }
+
+      // Add new marker
+      marker = L.marker([lat, lng], { 
+        draggable: true,
+        icon: customIcon
+      }).addTo(map);
+      
+      // Center map on selected location
+      map.setView([lat, lng], 15);
 
       // Update manual inputs
       latitudeInput.value = lat.toFixed(6);
-      longitudeInput.value = lon.toFixed(6);
+      longitudeInput.value = lng.toFixed(6);
 
-      if (marker) map.removeLayer(marker);
-      marker = L.marker([lat, lon], { draggable: true }).addTo(map);
-      map.setView([lat, lon], 14);
+      // Store address details
+      window.markerAddressDetails = selectedData;
 
-      // Store the address data
-      window.markerAddressDetails = item;
-
-      // Add dragend event to the marker
+      // Add drag event to new marker
       marker.on("dragend", async function (e) {
         const newLat = e.target.getLatLng().lat;
         const newLng = e.target.getLatLng().lng;
@@ -407,179 +676,256 @@
         const geoData = await reverseGeocode(newLat, newLng);
         if (geoData && geoData.display_name) {
           addressInput.value = geoData.display_name;
-          window.markerAddressDetails = geoData; // Store the full geocoding response
+          window.markerAddressDetails = geoData;
         }
       });
     }
   });
 
-  document
-    .getElementById("prediction-form")
-    .addEventListener("submit", async function (event) {
-      const form = this;
-      const isManualMode = document.getElementById("mode-manual").checked;
-      let isValid = true;
+  // Form validation and submission
+  document.getElementById("prediction-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    
+    const form = this;
+    let isValid = true;
 
-      // Handle the required fields based on mode
-      if (isManualMode) {
-        // In manual mode, we need lat/lng
-        const latValue = latitudeInput.value.replace(",", ".");
-        const lngValue = longitudeInput.value.replace(",", ".");
+    // Clear previous validation states
+    form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
 
-        const lat = parseFloat(latValue);
-        const lng = parseFloat(lngValue);
-
-        if (isNaN(lat)) {
-          latitudeInput.setCustomValidity("Latitude harus berupa angka");
-          isValid = false;
-        } else {
-          latitudeInput.setCustomValidity("");
-          // Keep the original lat/lon fields in manual mode
-          document.getElementById("hidden-lat").value = lat;
-        }
-
-        if (isNaN(lng)) {
-          longitudeInput.setCustomValidity("Longitude harus berupa angka");
-          isValid = false;
-        } else {
-          longitudeInput.setCustomValidity("");
-          document.getElementById("hidden-lon").value = lng;
-        }
-
-        // Use kota and kode_pos values from manual inputs - copy to hidden fields
-        document.getElementById("hidden-kota").value =
-          document.getElementById("kota").value || "Jakarta";
-        document.getElementById("hidden-kode_pos").value =
-          document.getElementById("kode_pos").value || "";
-      } else {
-        // Maps mode - use hidden fields and disable manual inputs
-        if (!addressInput.value.trim()) {
-          addressInput.setCustomValidity(
-            "Mohon masukkan alamat atau klik pada peta"
-          );
-          isValid = false;
-        } else {
-          addressInput.setCustomValidity("");
-        }
-
-        // Disable manual fields so they aren't submitted
-        document.getElementById("latitude").disabled = true;
-        document.getElementById("longitude").disabled = true;
-        document.getElementById("kota").disabled = true;
-        document.getElementById("kode_pos").disabled = true;
-
-        // Get geocoding data from the marker
-        if (marker) {
-          const position = marker.getLatLng();
-          document.getElementById("hidden-lat").value = position.lat;
-          document.getElementById("hidden-lon").value = position.lng;
-
-          // Before submitting, ensure we have city and postal code from marker
-          if (!window.markerAddressDetails) {
-            // If we don't have the details yet, fetch them
-            event.preventDefault(); // Prevent form submission
-
-            try {
-              const geoData = await reverseGeocode(position.lat, position.lng);
-              if (geoData) {
-                window.markerAddressDetails = geoData;
-                // Store city and postal code
-                let city = "Jakarta"; // Default
-                let postalCode = "";
-
-                if (geoData.address) {
-                  // Try to get city from address components
-                  for (const cityKey of [
-                    "city",
-                    "town",
-                    "municipality",
-                    "state",
-                  ]) {
-                    if (geoData.address[cityKey]) {
-                      city = geoData.address[cityKey];
-                      break;
-                    }
-                  }
-
-                  if (geoData.address.postcode) {
-                    postalCode = geoData.address.postcode;
-                  }
-                }
-
-                // Store values in hidden fields
-                document.getElementById("hidden-kota").value = city;
-                document.getElementById("hidden-kode_pos").value = postalCode;
-
-                // Now submit the form
-                form.submit();
-              }
-            } catch (error) {
-              console.error("Error fetching address details:", error);
-              // Still allow form submission even if geocoding fails
-              document.getElementById("hidden-kota").value = "Jakarta";
-              document.getElementById("hidden-kode_pos").value = "";
-              form.submit();
-            }
-            return false;
-          } else {
-            // We already have the address details
-            let city = "Jakarta"; // Default
-            let postalCode = "";
-
-            if (window.markerAddressDetails.address) {
-              // Try to get city from address components
-              for (const cityKey of ["city", "town", "municipality", "state"]) {
-                if (window.markerAddressDetails.address[cityKey]) {
-                  city = window.markerAddressDetails.address[cityKey];
-                  break;
-                }
-              }
-
-              if (window.markerAddressDetails.address.postcode) {
-                postalCode = window.markerAddressDetails.address.postcode;
-              }
-            }
-
-            // Store values in hidden fields
-            document.getElementById("hidden-kota").value = city;
-            document.getElementById("hidden-kode_pos").value = postalCode;
-          }
-        } else {
-          // No marker, use default values
-          document.getElementById("hidden-lat").value = -6.2;
-          document.getElementById("hidden-lon").value = 106.816666;
-          document.getElementById("hidden-kota").value = "Jakarta";
-          document.getElementById("hidden-kode_pos").value = "";
-        }
-      }
-
-      // Additional custom validation
-      const tahunDibangun = parseInt(
-        document.getElementById("tahun_dibangun").value
-      );
-      const tahunDirenovasi = document.getElementById("tahun_direnovasi").value;
-
-      if (tahunDirenovasi && parseInt(tahunDirenovasi) < tahunDibangun) {
-        document
-          .getElementById("tahun_direnovasi")
-          .setCustomValidity(
-            "Tahun renovasi harus lebih besar dari tahun dibangun"
-          );
+    // Validate required fields
+    const requiredFields = form.querySelectorAll('[required]');
+    requiredFields.forEach(field => {
+      if (!field.value.trim()) {
+        field.classList.add('is-invalid');
         isValid = false;
-      } else {
-        document.getElementById("tahun_direnovasi").setCustomValidity("");
-      }
-
-      // Add validation class to show feedback
-      form.classList.add("was-validated");
-
-      if (!isValid) {
-        event.preventDefault();
-        return false;
       }
     });
 
-  // Set default value for tahun dibangun to current year
-  document.getElementById("tahun_dibangun").value = new Date().getFullYear();
+    // Validate numeric fields
+    const numericFields = ['luas_tanah', 'luas_bangunan', 'tahun_dibangun', 'lebar_jalan'];
+    numericFields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field && field.value) {
+        const value = parseFloat(field.value);
+        if (isNaN(value) || value <= 0) {
+          field.classList.add('is-invalid');
+          isValid = false;
+        }
+      }
+    });
+
+    // Validate year fields
+    const currentYear = new Date().getFullYear();
+    const yearFields = ['tahun_dibangun', 'tahun_direnovasi'];
+    yearFields.forEach(fieldId => {
+      const field = document.getElementById(fieldId);
+      if (field && field.value) {
+        const year = parseInt(field.value);
+        if (isNaN(year) || year < 1900 || year > currentYear + 1) {
+          field.classList.add('is-invalid');
+          isValid = false;
+        }
+      }
+    });
+
+    // Validate location data
+    const modeRadio = document.querySelector('input[name="mode"]:checked');
+    if (modeRadio && modeRadio.value === 'maps') {
+      // Maps mode - check if marker exists
+      if (!marker) {
+        addressInput.classList.add('is-invalid');
+        isValid = false;
+        alert('Mohon pilih lokasi pada peta atau masukkan alamat yang valid.');
+      } else {
+        // Copy marker data to hidden fields
+        const position = marker.getLatLng();
+        document.getElementById('hidden-lat').value = position.lat;
+        document.getElementById('hidden-lon').value = position.lng;
+        
+        // Extract city and postal code from address details
+        if (window.markerAddressDetails && window.markerAddressDetails.address) {
+          const addr = window.markerAddressDetails.address;
+          const city = addr.city || addr.town || addr.village || addr.county || addr.state || '';
+          const postcode = addr.postcode || '';
+          
+          document.getElementById('hidden-kota').value = city;
+          document.getElementById('hidden-kode_pos').value = postcode;
+        }
+      }
+    } else {
+      // Manual mode - validate coordinate inputs
+      const latField = document.getElementById('latitude');
+      const lngField = document.getElementById('longitude');
+      const cityField = document.getElementById('kota');
+      const postalField = document.getElementById('kode_pos');
+
+      if (!latField.value || !lngField.value) {
+        latField.classList.add('is-invalid');
+        lngField.classList.add('is-invalid');
+        isValid = false;
+      } else {
+        const lat = parseFloat(latField.value.replace(',', '.'));
+        const lng = parseFloat(lngField.value.replace(',', '.'));
+        
+        if (isNaN(lat) || isNaN(lng)) {
+          latField.classList.add('is-invalid');
+          lngField.classList.add('is-invalid');
+          isValid = false;
+        } else {
+          // Copy manual data to hidden fields
+          document.getElementById('hidden-lat').value = lat;
+          document.getElementById('hidden-lon').value = lng;
+          document.getElementById('hidden-kota').value = cityField.value;
+          document.getElementById('hidden-kode_pos').value = postalField.value;
+        }
+      }
+
+      if (!cityField.value.trim()) {
+        cityField.classList.add('is-invalid');
+        isValid = false;
+      }
+    }
+
+    // If validation passes, submit the form
+    if (isValid) {
+      // Show loading state
+      const submitBtn = form.querySelector('button[type="submit"]');
+      const originalText = submitBtn.innerHTML;
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Memproses...';
+      submitBtn.disabled = true;
+
+      // Submit form
+      form.submit();
+    } else {
+      // Scroll to first invalid field
+      const firstInvalid = form.querySelector('.is-invalid');
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        firstInvalid.focus();
+      }
+    }
+  });
+
+  // Remove invalid class on input
+  document.querySelectorAll('.form-control, .form-select').forEach(field => {
+    field.addEventListener('input', function() {
+      if (this.classList.contains('is-invalid')) {
+        this.classList.remove('is-invalid');
+      }
+    });
+  });
+
+  // Initialize map size on page load
+  setTimeout(() => {
+    map.invalidateSize();
+  }, 100);
+
+  // Handle browser back/forward buttons
+  window.addEventListener('popstate', function(event) {
+    if (event.state && event.state.formData) {
+      // Restore form data if needed
+      console.log('Restoring form state');
+    }
+  });
+
+  // Auto-save form data to prevent data loss
+  let autoSaveTimer;
+  function autoSaveFormData() {
+    clearTimeout(autoSaveTimer);
+    autoSaveTimer = setTimeout(() => {
+      const formData = new FormData(document.getElementById('prediction-form'));
+      const data = {};
+      for (let [key, value] of formData.entries()) {
+        data[key] = value;
+      }
+      // Save to sessionStorage (not localStorage as per restrictions)
+      try {
+        sessionStorage.setItem('housePredictionFormData', JSON.stringify(data));
+      } catch (e) {
+        // Fallback: store in memory
+        window.formBackupData = data;
+      }
+    }, 1000);
+  }
+
+  // Attach auto-save to form inputs
+  document.querySelectorAll('input, select, textarea').forEach(field => {
+    field.addEventListener('input', autoSaveFormData);
+    field.addEventListener('change', autoSaveFormData);
+  });
+
+  // Restore form data on page load
+  window.addEventListener('load', function() {
+    try {
+      const savedData = sessionStorage.getItem('housePredictionFormData') || 
+                       JSON.stringify(window.formBackupData || {});
+      const data = JSON.parse(savedData);
+      
+      Object.keys(data).forEach(key => {
+        const field = document.querySelector(`[name="${key}"]`);
+        if (field && data[key]) {
+          if (field.type === 'checkbox') {
+            field.checked = data[key] === '1' || data[key] === 'on';
+          } else if (field.type === 'radio') {
+            if (field.value === data[key]) {
+              field.checked = true;
+            }
+          } else {
+            field.value = data[key];
+          }
+        }
+      });
+    } catch (e) {
+      console.log('No saved form data to restore');
+    }
+  });
+
+  // Clear saved data on successful submission
+  window.addEventListener('beforeunload', function() {
+    // Only clear if form was successfully submitted
+    if (document.querySelector('.alert-success')) {
+      try {
+        sessionStorage.removeItem('housePredictionFormData');
+        delete window.formBackupData;
+      } catch (e) {
+        // Ignore errors
+      }
+    }
+  });
+
+  // Utility function to format currency
+  function formatCurrency(amount) {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
+  }
+
+  // Add tooltips for better UX
+  const tooltipElements = [
+    { id: 'luas_tanah', text: 'Luas keseluruhan tanah dalam meter persegi' },
+    { id: 'luas_bangunan', text: 'Luas bangunan yang sudah terbangun dalam meter persegi' },
+    { id: 'tahun_dibangun', text: 'Tahun pertama kali bangunan didirikan' },
+    { id: 'tahun_direnovasi', text: 'Tahun terakhir bangunan direnovasi (kosongkan jika belum pernah)' },
+    { id: 'lebar_jalan', text: 'Lebar jalan di depan properti dalam meter' }
+  ];
+
+  tooltipElements.forEach(item => {
+    const element = document.getElementById(item.id);
+    if (element) {
+      element.setAttribute('title', item.text);
+      element.setAttribute('data-bs-toggle', 'tooltip');
+    }
+  });
+
+  // Initialize tooltips if Bootstrap is available
+  if (typeof bootstrap !== 'undefined') {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+  }
 </script>
 {% endblock %}
