@@ -3,3 +3,5 @@ pandas==2.2.3      # Latest release Sep 20, 2024 :contentReference[oaicite:1]{in
 numpy==2.2.5       # Latest release Apr 19, 2025 :contentReference[oaicite:2]{index=2}
 joblib==1.4.2      # Latest release May 2, 2024 :contentReference[oaicite:3]{index=3}
 xgboost==3.0.0     # Latest release Mar 15, 2025 :contentReference[oaicite:4]{index=4}
+scikit-learn==1.6.1
+category-encoders==2.8.1
